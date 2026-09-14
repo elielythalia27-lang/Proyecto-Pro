@@ -227,8 +227,8 @@ fun HomeScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .aspectRatio(0.70f)
-                                        .clip(RoundedCornerShape(16.dp))
+                                        .aspectRatio(0.75f)
+                                        .clip(RoundedCornerShape(12.dp))
                                         .shimmerEffect()
                                 )
                             }

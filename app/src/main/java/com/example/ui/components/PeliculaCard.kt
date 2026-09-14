@@ -78,21 +78,21 @@ fun PeliculaCard(
         modifier = modifier
             .fillMaxWidth()
             .testTag("pelicula_card_${pelicula.id}")
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable { onCardClick() },
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         border = BorderStroke(if (isDarkTheme) 1.dp else 1.5.dp, cardBorder),
         colors = CardDefaults.cardColors(containerColor = cardBg),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDarkTheme) 2.dp else 5.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDarkTheme) 2.dp else 4.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Poster area with strictly uniform 0.70 aspect ratio
+            // Poster area with balanced compact aspect ratio (0.75)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.70f)
+                    .aspectRatio(0.75f)
                     .background(if (isDarkTheme) Color(0xFF161F33) else Color(0xFFE2E8F0))
             ) {
                 SubcomposeAsyncImage(
@@ -236,23 +236,23 @@ fun PeliculaCard(
                 }
             }
 
-            // Fixed Height Title Container: guarantees identical card size for all movies
+            // Compact Fixed Height Title Container: guarantees identical card size for all movies
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(40.dp)
                     .background(cardBg)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = pelicula.safeTitle,
-                    fontSize = 12.sp,
+                    fontSize = 11.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = titleColor,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
-                    lineHeight = 15.sp,
+                    lineHeight = 14.sp,
                     overflow = TextOverflow.Ellipsis
                 )
             }
