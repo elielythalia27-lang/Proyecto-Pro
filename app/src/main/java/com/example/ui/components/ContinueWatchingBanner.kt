@@ -42,6 +42,7 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.data.model.ContinueWatchingItem
+import com.example.ui.components.shimmerEffect
 import com.example.ui.theme.CineGreen
 import java.util.Locale
 
@@ -130,7 +131,8 @@ fun ContinueWatchingBanner(
                     SubcomposeAsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(item.coverUrl)
-                            .crossfade(true)
+                            .crossfade(150)
+                            .size(180, 220)
                             .build(),
                         contentDescription = item.title,
                         contentScale = ContentScale.Crop,
@@ -138,7 +140,7 @@ fun ContinueWatchingBanner(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .shimmerEffect(isDark = isDarkTheme)
+                                    .shimmerEffect(RoundedCornerShape(8.dp), isDark = isDarkTheme)
                             )
                         },
                         modifier = Modifier.fillMaxSize()

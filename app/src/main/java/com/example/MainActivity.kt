@@ -15,7 +15,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,12 +32,14 @@ import androidx.navigation.compose.rememberNavController
 import com.example.data.model.DownloadStatus
 import com.example.data.model.ThemeMode
 import com.example.ui.components.AppBottomNav
+import com.example.ui.components.VpnBlockedScreen
 import com.example.ui.screens.AjustesScreen
 import com.example.ui.screens.DescargasScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.PlayerScreen
 import com.example.ui.screens.SplashScreen
 import com.example.ui.theme.MyApplicationTheme
+import com.example.utils.VpnProxyDetector
 import com.example.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
@@ -75,6 +81,18 @@ fun MainAppNavigation(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    var retryKey by remember { mutableStateOf(0) }
+    val vpnStatus by produceState(
+        initialValue = remember { VpnProxyDetector.checkStatus(context) },
+        context,
+        retryKey
+    ) {
+        value = VpnProxyDetector.checkStatus(context)
+        VpnProxyDetector.observeVpnAndProxy(context).collect {
+            value = it
+        }
+    }
+
     val isDark = when (uiState.themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.DARK -> true
@@ -83,7 +101,14 @@ fun MainAppNavigation(
 
     val activePlayback = uiState.activePlayback
 
-    if (activePlayback != null) {
+    if (vpnStatus.isBlocked) {
+        VpnBlockedScreen(
+            status = vpnStatus,
+            onRetryCheck = {
+                retryKey++
+            }
+        )
+    } else if (activePlayback != null) {
         PlayerScreen(
             videoUrl = activePlayback.videoUrl,
             title = activePlayback.title,

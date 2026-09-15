@@ -53,6 +53,7 @@ import coil.request.ImageRequest
 import com.example.data.model.DownloadItem
 import com.example.data.model.DownloadStatus
 import com.example.data.model.Pelicula
+import com.example.ui.components.shimmerEffect
 
 /**
  * Standard Uniform Movie Card.
@@ -95,46 +96,53 @@ fun PeliculaCard(
                     .aspectRatio(0.88f)
                     .background(if (isDarkTheme) Color(0xFF161F33) else Color(0xFFE2E8F0))
             ) {
+                // Fallback / placeholder backing
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(if (isDarkTheme) Color(0xFF161F33) else Color(0xFFE2E8F0)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = if (isDarkTheme) Color.White.copy(alpha = 0.2f) else Color.Black.copy(alpha = 0.2f),
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+
+                // Smooth SubcomposeAsyncImage with shimmer loading
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(pelicula.safeCoverUrl)
-                        .crossfade(true)
+                        .crossfade(150)
+                        .size(320, 360)
                         .build(),
                     contentDescription = pelicula.safeTitle,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
                     loading = {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .shimmerEffect(isDark = isDarkTheme)
+                                .shimmerEffect(RoundedCornerShape(0.dp), isDark = isDarkTheme)
                         )
                     },
                     error = {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(if (isDarkTheme) Color(0xFF131A2B) else Color(0xFFCBD5E1)),
+                                .background(if (isDarkTheme) Color(0xFF161F33) else Color(0xFFE2E8F0)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = if (isDarkTheme) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.3f),
-                                    modifier = Modifier.size(38.dp)
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Sin portada",
-                                    color = if (isDarkTheme) Color.White.copy(alpha = 0.4f) else Color.Black.copy(alpha = 0.4f),
-                                    fontSize = 11.sp
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = if (isDarkTheme) Color.White.copy(alpha = 0.25f) else Color.Black.copy(alpha = 0.25f),
+                                modifier = Modifier.size(36.dp)
+                            )
                         }
-                    }
+                    },
+                    modifier = Modifier.fillMaxSize()
                 )
 
                 // Type or Year Badge on top right
@@ -258,23 +266,4 @@ fun PeliculaCard(
             }
         }
     }
-}
-
-/**
- * Lightweight, high-performance pulse effect modifier replacing heavy linear gradient shimmers.
- */
-@Composable
-fun Modifier.shimmerEffect(): Modifier {
-    val transition = rememberInfiniteTransition(label = "pulse_transition")
-    val alphaAnim by transition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0.85f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 800, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse_anim"
-    )
-
-    return this.background(Color(0xFF1E293B).copy(alpha = alphaAnim))
 }

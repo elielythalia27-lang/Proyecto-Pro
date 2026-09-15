@@ -850,27 +850,36 @@ fun PlayerScreen(
                                 }
 
                                 // Aspect ratio toggle button (Ajustar / Rellenar / Estirar)
-                                IconButton(
-                                    onClick = {
-                                        val modes = VideoResizeMode.values()
-                                        val nextIndex = (currentResizeMode.ordinal + 1) % modes.size
-                                        currentResizeMode = modes[nextIndex]
-                                        playerViewRef?.resizeMode = currentResizeMode.mode
-                                        resetControlsTimer()
-                                    }
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color.White.copy(alpha = 0.18f),
+                                    modifier = Modifier
+                                        .padding(end = 8.dp)
+                                        .clickable {
+                                            val modes = VideoResizeMode.values()
+                                            val nextIndex = (currentResizeMode.ordinal + 1) % modes.size
+                                            currentResizeMode = modes[nextIndex]
+                                            playerViewRef?.resizeMode = currentResizeMode.mode
+                                            resetControlsTimer()
+                                        }
                                 ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Icon(
                                             imageVector = Icons.Default.AspectRatio,
-                                            contentDescription = "Escala",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(20.dp)
+                                            contentDescription = "Escala de pantalla",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(15.dp)
                                         )
+                                        Spacer(modifier = Modifier.width(5.dp))
                                         Text(
                                             text = currentResizeMode.displayName,
-                                            fontSize = 9.sp,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Bold
+                                            fontSize = 11.sp,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1
                                         )
                                     }
                                 }

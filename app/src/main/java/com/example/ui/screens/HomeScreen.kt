@@ -156,7 +156,7 @@ fun HomeScreen(
                     // Telegram Channel Button with official Telegram logo
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .clickable { showTelegramDialog = true }
                             .testTag("telegram_button"),
@@ -165,7 +165,7 @@ fun HomeScreen(
                         Image(
                             painter = painterResource(id = R.drawable.ic_telegram_logo),
                             contentDescription = "Canal de Telegram",
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(34.dp)
                         )
                     }
                 }
@@ -337,7 +337,11 @@ fun HomeScreen(
                     }
 
                     else -> {
-                        // Original, clean 2-column catalog grid
+                        val downloadsMap = remember(uiState.downloads) {
+                            uiState.downloads.associateBy { it.id }
+                        }
+
+                        // High performance 2-column catalog grid
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(2),
                             modifier = Modifier
@@ -349,9 +353,10 @@ fun HomeScreen(
                         ) {
                             items(
                                 items = uiState.filteredPeliculas,
-                                key = { it.id }
+                                key = { it.id },
+                                contentType = { "pelicula_card" }
                             ) { pelicula ->
-                                val downloadItem = uiState.downloads.find { it.id == pelicula.id }
+                                val downloadItem = downloadsMap[pelicula.id]
                                 PeliculaCard(
                                     pelicula = pelicula,
                                     downloadItem = downloadItem,
@@ -408,7 +413,8 @@ fun HomeScreen(
                         SubcomposeAsyncImage(
                             model = ImageRequest.Builder(context)
                                 .data(pelicula.safeCoverUrl)
-                                .crossfade(true)
+                                .crossfade(150)
+                                .size(320, 440)
                                 .build(),
                             contentDescription = pelicula.safeTitle,
                             contentScale = ContentScale.Crop,
@@ -416,7 +422,7 @@ fun HomeScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .shimmerEffect(isDark = isDark)
+                                        .shimmerEffect(RoundedCornerShape(14.dp), isDark = isDark)
                                 )
                             },
                             modifier = Modifier.fillMaxSize()

@@ -1050,7 +1050,8 @@ fun ActiveDownloadingCard(
                     SubcomposeAsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(item.coverUrl)
-                            .crossfade(true)
+                            .crossfade(150)
+                            .size(240, 320)
                             .build(),
                         contentDescription = item.title,
                         contentScale = ContentScale.Crop,
@@ -1058,7 +1059,7 @@ fun ActiveDownloadingCard(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .shimmerEffect()
+                                    .shimmerEffect(RoundedCornerShape(10.dp), isDark = isDarkTheme)
                             )
                         },
                         modifier = Modifier.fillMaxSize()
@@ -1306,7 +1307,8 @@ fun PendingQueueCard(
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(item.coverUrl)
-                        .crossfade(true)
+                        .crossfade(150)
+                        .size(200, 260)
                         .build(),
                     contentDescription = item.title,
                     contentScale = ContentScale.Crop,
@@ -1314,7 +1316,7 @@ fun PendingQueueCard(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .shimmerEffect()
+                                .shimmerEffect(RoundedCornerShape(8.dp), isDark = isDarkTheme)
                         )
                     },
                     modifier = Modifier.fillMaxSize()
@@ -1435,7 +1437,8 @@ fun DownloadedMovieCard(
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(item.coverUrl)
-                        .crossfade(true)
+                        .crossfade(150)
+                        .size(240, 320)
                         .build(),
                     contentDescription = item.title,
                     contentScale = ContentScale.Crop,
@@ -1443,7 +1446,7 @@ fun DownloadedMovieCard(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .shimmerEffect()
+                                .shimmerEffect(RoundedCornerShape(10.dp), isDark = isDarkTheme)
                         )
                     },
                     modifier = Modifier.fillMaxSize()

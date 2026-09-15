@@ -11,6 +11,7 @@ import com.example.data.local.PeliculaPreferences
 import com.example.data.model.DownloadItem
 import com.example.data.model.DownloadStatus
 import com.example.data.model.Pelicula
+import com.example.utils.VpnProxyDetector
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,8 @@ import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+
+class VpnDetectedException(message: String) : Exception(message)
 
 class DownloadHelper(
     private val context: Context,
@@ -79,6 +82,11 @@ class DownloadHelper(
         val videoUrl = pelicula.safeVideoUrl
         if (videoUrl.isEmpty()) {
             Toast.makeText(context, "URL de video no válida", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (VpnProxyDetector.isVpnOrProxyActive(context)) {
+            Toast.makeText(context, "No es posible descargar con VPN o Proxy activo", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -172,6 +180,10 @@ class DownloadHelper(
     }
 
     fun resumeDownload(item: DownloadItem) {
+        if (VpnProxyDetector.isVpnOrProxyActive(context)) {
+            Toast.makeText(context, "Desactiva la VPN o Proxy para reanudar la descarga", Toast.LENGTH_LONG).show()
+            return
+        }
         scope.launch(Dispatchers.IO) {
             try {
                 val currentList = preferences.downloads.first()
@@ -244,6 +256,10 @@ class DownloadHelper(
     }
 
     fun resumeAllDownloads() {
+        if (VpnProxyDetector.isVpnOrProxyActive(context)) {
+            Toast.makeText(context, "Desactiva la VPN o Proxy para reanudar las descargas", Toast.LENGTH_LONG).show()
+            return
+        }
         scope.launch(Dispatchers.IO) {
             try {
                 val currentList = preferences.downloads.first()
@@ -304,6 +320,20 @@ class DownloadHelper(
     private fun launchDownloadJob(item: DownloadItem, destFile: File) {
         activeJobs[item.id]?.cancel()
         val job = scope.launch(Dispatchers.IO) {
+            if (VpnProxyDetector.isVpnOrProxyActive(context)) {
+                val paused = item.copy(
+                    status = DownloadStatus.PAUSED,
+                    speedBytesPerSec = 0L,
+                    etaSeconds = 0L
+                )
+                preferences.addOrUpdateDownload(paused)
+                showPausedNotification(paused)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Descarga detenida: VPN o Proxy detectado", Toast.LENGTH_LONG).show()
+                }
+                return@launch
+            }
+
             var input: InputStream? = null
             var raf: RandomAccessFile? = null
             var downloaded = if (destFile.exists()) destFile.length() else 0L
@@ -364,6 +394,10 @@ class DownloadHelper(
                     val now = System.currentTimeMillis()
                     val elapsed = now - lastSpeedCalcTime
                     if (elapsed >= 800) {
+                        if (VpnProxyDetector.isVpnOrProxyActive(context)) {
+                            throw VpnDetectedException("Se detectó una VPN o Proxy activo durante la descarga")
+                        }
+
                         val instantSpeed = (bytesSinceLastCalc * 1000L) / elapsed
                         currentSpeed = if (currentSpeed > 0) ((currentSpeed * 0.6) + (instantSpeed * 0.4)).toLong() else instantSpeed
                         val currentActive = activeJobs.size.coerceAtLeast(1)
@@ -405,6 +439,18 @@ class DownloadHelper(
                     showCompletedNotification(completed)
                     checkAndStartNextPending()
                 }
+            } catch (e: VpnDetectedException) {
+                val paused = item.copy(
+                    status = DownloadStatus.PAUSED,
+                    speedBytesPerSec = 0L,
+                    etaSeconds = 0L
+                )
+                preferences.addOrUpdateDownload(paused)
+                showPausedNotification(paused)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Descarga pausada: se detectó uso de VPN o Proxy", Toast.LENGTH_LONG).show()
+                }
+                pauseAllDownloads()
             } catch (e: CancellationException) {
                 // Paused or cancelled intentionally
             } catch (e: Exception) {
@@ -492,6 +538,7 @@ class DownloadHelper(
     }
 
     private suspend fun checkAndStartNextPending() {
+        if (VpnProxyDetector.isVpnOrProxyActive(context)) return
         try {
             val list = preferences.downloads.first()
             val maxLimit = preferences.maxConcurrentDownloads.first()

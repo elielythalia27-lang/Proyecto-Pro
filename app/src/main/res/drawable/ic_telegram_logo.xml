@@ -1,91 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="72dp"
-    android:height="72dp"
+    android:width="48dp"
+    android:height="48dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
 
-    <!-- Ambient Glow behind Squircle -->
+    <!-- Official Circular Background with smooth Telegram gradient -->
     <path
-        android:pathData="M50,50 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:centerX="50"
-                android:centerY="46"
-                android:gradientRadius="46"
-                android:type="radial">
-                <item android:offset="0.0" android:color="#402AABEE" />
-                <item android:offset="0.8" android:color="#15229ED9" />
-                <item android:offset="1.0" android:color="#00000000" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- Professional 3D Glossy Sky-Blue Squircle Tile -->
-    <path
-        android:pathData="M24,6 L76,6 C88,6 95,13 95,25 L95,75 C95,87 88,94 76,94 L24,94 C12,94 5,87 5,75 L5,25 C5,13 12,6 24,6 Z">
+        android:pathData="M50,50 m-48,0 a48,48 0 1,0 96,0 a48,48 0 1,0 -96,0">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:startX="50"
-                android:startY="6"
+                android:startY="2"
                 android:endX="50"
-                android:endY="94"
+                android:endY="98"
                 android:type="linear">
-                <item android:offset="0.0" android:color="#36B3F7" />
-                <item android:offset="0.35" android:color="#2AABEE" />
-                <item android:offset="0.75" android:color="#229ED9" />
-                <item android:offset="1.0" android:color="#1787C1" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- Crisp Top Highlight Rim -->
-    <path
-        android:pathData="M24,6 L76,6 C88,6 95,13 95,25 L95,75 C95,87 88,94 76,94 L24,94 C12,94 5,87 5,75 L5,25 C5,13 12,6 24,6 Z"
-        android:strokeWidth="1.5">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:startX="50"
-                android:startY="6"
-                android:endX="50"
-                android:endY="94"
-                android:type="linear">
-                <item android:offset="0.0" android:color="#90FFFFFF" />
-                <item android:offset="0.3" android:color="#30FFFFFF" />
-                <item android:offset="1.0" android:color="#10000000" />
+                <item android:offset="0.0" android:color="#29B6F6" />
+                <item android:offset="0.4" android:color="#039BE5" />
+                <item android:offset="1.0" android:color="#0277BD" />
             </gradient>
         </aapt:attr>
     </path>
 
     <!-- Paper Airplane: Lower Shaded Bottom Wing -->
     <path
-        android:pathData="M44.5,60.5 L43.2,74.5 C44.8,74.5 45.5,73.8 46.4,72.9 L54.2,65.4 L70.2,77.2 C73.2,78.8 75.3,77.9 76.1,74.4 L86.6,24.8 C87.7,20.3 84.8,18.3 81.9,19.6 L20.1,43.5 C15.7,45.2 15.8,47.7 19.4,48.8 L35.2,53.7 L72.0,30.5 C73.7,29.5 75.2,30.0 73.9,31.2 L44.5,60.5 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="22"
-                android:startY="25"
-                android:endX="82"
-                android:endY="75"
-                android:type="linear">
-                <item android:offset="0.0" android:color="#CFE5F5" />
-                <item android:offset="1.0" android:color="#B0D5ED" />
-            </gradient>
-        </aapt:attr>
-    </path>
+        android:pathData="M45.5,58.6 L44.4,70.1 C45.7,70.1 46.3,69.5 47.0,68.8 L53.4,62.6 L66.6,72.3 C69.0,73.6 70.8,72.9 71.4,70.0 L80.0,29.3 C80.9,25.6 78.5,24.0 76.2,25.0 L24.9,44.6 C21.3,46.0 21.4,48.0 24.3,49.0 L37.9,53.0 L68.0,34.0 C69.4,33.2 70.7,33.6 69.6,34.6 L45.5,58.6 Z"
+        android:fillColor="#D0E6F8" />
 
-    <!-- Paper Airplane: Pure White Main Top Wing / Fuselage -->
+    <!-- Paper Airplane: Pure White Main Top Wing -->
     <path
-        android:pathData="M19.4,48.8 L72.0,30.5 C73.7,29.5 75.2,30.0 73.9,31.2 L44.5,60.5 L35.2,53.7 L19.4,48.8 Z"
+        android:pathData="M24.3,49.0 L68.0,34.0 C69.4,33.2 70.7,33.6 69.6,34.6 L45.5,58.6 L37.9,53.0 L24.3,49.0 Z"
         android:fillColor="#FFFFFF" />
 
     <!-- Paper Airplane: Center Fold Shading -->
     <path
-        android:pathData="M44.5,60.5 L54.2,65.4 L46.4,72.9 C45.5,73.8 44.8,74.5 43.2,74.5 L44.5,60.5 Z"
-        android:fillColor="#D8EAF7" />
+        android:pathData="M45.5,58.6 L53.4,62.6 L47.0,68.8 C46.3,69.5 45.7,70.1 44.4,70.1 L45.5,58.6 Z"
+        android:fillColor="#C0DCF5" />
 
     <!-- Paper Airplane: Pure White Right Swept Wing Body -->
     <path
-        android:pathData="M44.5,60.5 L73.9,31.2 L86.6,24.8 L70.2,77.2 L44.5,60.5 Z"
+        android:pathData="M45.5,58.6 L69.6,34.6 L80.0,29.3 L66.6,72.3 L45.5,58.6 Z"
         android:fillColor="#FFFFFF" />
 </vector>
