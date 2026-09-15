@@ -6,188 +6,133 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Scaled group centered inside safe zone (66dp circle inside 108dp) -->
     <group
-        android:scaleX="0.65"
-        android:scaleY="0.65"
-        android:translateX="18.9"
-        android:translateY="18.9">
+        android:scaleX="0.68"
+        android:scaleY="0.68"
+        android:translateX="17.28"
+        android:translateY="17.28">
 
-        <!-- 1. Ambient Glow behind neon body -->
+        <!-- Ambient Volumetric Glow Core -->
         <path
-            android:pathData="M54,54m-48,0a48,48 0 1,1 96,0a48,48 0 1,1 -96,0">
+            android:pathData="M54,54 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0">
             <aapt:attr name="android:fillColor">
                 <gradient
                     android:centerX="54"
                     android:centerY="50"
-                    android:gradientRadius="48"
+                    android:gradientRadius="42"
                     android:type="radial">
-                    <item android:offset="0.0" android:color="#40FF0055" />
-                    <item android:offset="0.55" android:color="#2500E5FF" />
+                    <item android:offset="0.0" android:color="#45FF0055" />
+                    <item android:offset="0.5" android:color="#2500E5FF" />
                     <item android:offset="1.0" android:color="#00000000" />
                 </gradient>
             </aapt:attr>
         </path>
 
-        <!-- 2. Outer Film & Play Shell: Dark Glossy Body -->
+        <!-- Left Vertical Film Strip Bar with Glow -->
         <path
-            android:pathData="M34,14 C20,16 12,28 12,46 C12,66 22,82 40,86 L48,86 C54,86 58,82 58,76 C58,70 54,66 48,66 C34,64 26,56 26,44 C26,30 34,22 46,22 C64,22 84,34 94,50 C98,58 98,68 88,78 C80,86 68,90 56,90 L56,96 C72,96 86,90 98,78 C110,64 108,48 98,34 C84,16 56,12 34,14 Z"
-            android:fillColor="#0D111A" />
-
-        <!-- 3. Outer Neon Rim: Vibrant Electric Red to Purple to Cyan Gradient -->
-        <path
-            android:pathData="M34,14 C20,16 12,28 12,46 C12,66 22,82 40,86 L48,86 C54,86 58,82 58,76 C58,70 54,66 48,66 C34,64 26,56 26,44 C26,30 34,22 46,22 C64,22 84,34 94,50 C98,58 98,68 88,78 C80,86 68,90 56,90 L56,96 C72,96 86,90 98,78 C110,64 108,48 98,34 C84,16 56,12 34,14 Z"
-            android:strokeWidth="2.5">
-            <aapt:attr name="android:strokeColor">
-                <gradient
-                    android:startX="12"
-                    android:startY="14"
-                    android:endX="104"
-                    android:endY="96"
-                    android:type="linear">
-                    <item android:offset="0.0" android:color="#FF0044" />
-                    <item android:offset="0.25" android:color="#FF007F" />
-                    <item android:offset="0.5" android:color="#8A00FF" />
-                    <item android:offset="0.8" android:color="#0066FF" />
-                    <item android:offset="1.0" android:color="#00F0FF" />
-                </gradient>
-            </aapt:attr>
-        </path>
-
-        <!-- 4. Film Strip Perforated Left Track (Vertical bar with rectangular sprocket holes) -->
-        <path
-            android:pathData="M16,28 C16,25 18,23 21,23 L29,23 C32,23 34,25 34,28 L34,70 C34,73 32,75 29,75 L21,75 C18,75 16,73 16,70 Z">
+            android:pathData="M18,22 C18,18 21,15 25,15 L33,15 C37,15 40,18 40,22 L40,82 C40,86 37,89 33,89 L25,89 C21,89 18,86 18,82 Z">
             <aapt:attr name="android:fillColor">
                 <gradient
-                    android:startX="16"
-                    android:startY="23"
-                    android:endX="34"
-                    android:endY="75"
-                    android:type="linear">
-                    <item android:offset="0.0" android:color="#FF0055" />
-                    <item android:offset="0.5" android:color="#7700FF" />
-                    <item android:offset="1.0" android:color="#0044FF" />
-                </gradient>
-            </aapt:attr>
-        </path>
-
-        <!-- Sprockets / Film holes (exact rectangular rounded holes with cyan/blue glow border) -->
-        <!-- Hole 1 -->
-        <path
-            android:pathData="M20,27 h5 c1,0 1.8,0.8 1.8,1.8 v4 c0,1 -0.8,1.8 -1.8,1.8 h-5 c-1,0 -1.8,-0.8 -1.8,-1.8 v-4 c0,-1 0.8,-1.8 1.8,-1.8 Z"
-            android:fillColor="#080C14" />
-        <path
-            android:pathData="M20,27 h5 c1,0 1.8,0.8 1.8,1.8 v4 c0,1 -0.8,1.8 -1.8,1.8 h-5 c-1,0 -1.8,-0.8 -1.8,-1.8 v-4 c0,-1 0.8,-1.8 1.8,-1.8 Z"
-            android:strokeWidth="1"
-            android:strokeColor="#5000E5FF" />
-
-        <!-- Hole 2 -->
-        <path
-            android:pathData="M20,38 h5 c1,0 1.8,0.8 1.8,1.8 v4 c0,1 -0.8,1.8 -1.8,1.8 h-5 c-1,0 -1.8,-0.8 -1.8,-1.8 v-4 c0,-1 0.8,-1.8 1.8,-1.8 Z"
-            android:fillColor="#080C14" />
-        <path
-            android:pathData="M20,38 h5 c1,0 1.8,0.8 1.8,1.8 v4 c0,1 -0.8,1.8 -1.8,1.8 h-5 c-1,0 -1.8,-0.8 -1.8,-1.8 v-4 c0,-1 0.8,-1.8 1.8,-1.8 Z"
-            android:strokeWidth="1"
-            android:strokeColor="#5000E5FF" />
-
-        <!-- Hole 3 -->
-        <path
-            android:pathData="M20,49 h5 c1,0 1.8,0.8 1.8,1.8 v4 c0,1 -0.8,1.8 -1.8,1.8 h-5 c-1,0 -1.8,-0.8 -1.8,-1.8 v-4 c0,-1 0.8,-1.8 1.8,-1.8 Z"
-            android:fillColor="#080C14" />
-        <path
-            android:pathData="M20,49 h5 c1,0 1.8,0.8 1.8,1.8 v4 c0,1 -0.8,1.8 -1.8,1.8 h-5 c-1,0 -1.8,-0.8 -1.8,-1.8 v-4 c0,-1 0.8,-1.8 1.8,-1.8 Z"
-            android:strokeWidth="1"
-            android:strokeColor="#5000E5FF" />
-
-        <!-- Hole 4 -->
-        <path
-            android:pathData="M20,60 h5 c1,0 1.8,0.8 1.8,1.8 v4 c0,1 -0.8,1.8 -1.8,1.8 h-5 c-1,0 -1.8,-0.8 -1.8,-1.8 v-4 c0,-1 0.8,-1.8 1.8,-1.8 Z"
-            android:fillColor="#080C14" />
-        <path
-            android:pathData="M20,60 h5 c1,0 1.8,0.8 1.8,1.8 v4 c0,1 -0.8,1.8 -1.8,1.8 h-5 c-1,0 -1.8,-0.8 -1.8,-1.8 v-4 c0,-1 0.8,-1.8 1.8,-1.8 Z"
-            android:strokeWidth="1"
-            android:strokeColor="#5000E5FF" />
-
-        <!-- 5. 3D Glossy Ruby-Red Play Triangle with Specular Highlight -->
-        <!-- Outer Triangle Border / Cushion -->
-        <path
-            android:pathData="M43,28 C41,27 39,28 39,31 L39,67 C39,70 41,71 43,70 L73,52 C75,51 75,47 73,46 Z"
-            android:strokeWidth="3.5">
-            <aapt:attr name="android:strokeColor">
-                <gradient
-                    android:startX="39"
-                    android:startY="27"
-                    android:endX="75"
-                    android:endY="71"
-                    android:type="linear">
-                    <item android:offset="0.0" android:color="#FFAEB9" />
-                    <item android:offset="0.2" android:color="#FF0044" />
-                    <item android:offset="0.8" android:color="#990022" />
-                    <item android:offset="1.0" android:color="#FF0055" />
-                </gradient>
-            </aapt:attr>
-            <aapt:attr name="android:fillColor">
-                <gradient
-                    android:startX="39"
-                    android:startY="28"
-                    android:endX="74"
-                    android:endY="70"
+                    android:startX="18"
+                    android:startY="15"
+                    android:endX="40"
+                    android:endY="89"
                     android:type="linear">
                     <item android:offset="0.0" android:color="#FF1744" />
-                    <item android:offset="0.4" android:color="#D50000" />
-                    <item android:offset="0.8" android:color="#8A0020" />
-                    <item android:offset="1.0" android:color="#4A0012" />
+                    <item android:offset="0.5" android:color="#9C27B0" />
+                    <item android:offset="1.0" android:color="#1A237E" />
                 </gradient>
             </aapt:attr>
         </path>
 
-        <!-- Inner Gelatinous Glossy Reflection on Play Button -->
-        <path
-            android:pathData="M42,32 L42,50 C48,45 56,43 66,48 L46,33 C44,31.5 42,32 42,32 Z"
-            android:fillColor="#70FFFFFF" />
+        <!-- Sprocket Holes -->
+        <path android:pathData="M22,21 H30 V27 H22 Z" android:fillColor="#070B14" />
+        <path android:pathData="M22,37 H30 V43 H22 Z" android:fillColor="#070B14" />
+        <path android:pathData="M22,53 H30 V59 H22 Z" android:fillColor="#070B14" />
+        <path android:pathData="M22,69 H30 V75 H22 Z" android:fillColor="#070B14" />
 
-        <!-- 6. Downward Download Arrow Connected from Play Triangle to Bottom -->
-        <!-- Arrow Body Stem & Head -->
+        <!-- 3D Ruby Play Triangle -->
         <path
-            android:pathData="M48,68 L48,82 L38,82 L54,101 L70,82 L60,82 L60,68 Z">
-            <aapt:attr name="android:fillColor">
-                <gradient
-                    android:startX="38"
-                    android:startY="68"
-                    android:endX="70"
-                    android:endY="101"
-                    android:type="linear">
-                    <item android:offset="0.0" android:color="#CC0033" />
-                    <item android:offset="0.3" android:color="#5500AA" />
-                    <item android:offset="0.7" android:color="#0033CC" />
-                    <item android:offset="1.0" android:color="#00D4FF" />
-                </gradient>
-            </aapt:attr>
-        </path>
-
-        <!-- Arrow Neon Gloss Stroke -->
-        <path
-            android:pathData="M48,68 L48,82 L38,82 L54,101 L70,82 L60,82 L60,68 Z"
-            android:strokeWidth="2.5">
+            android:pathData="M42,24 C39.5,22.5 36,24.2 36,27.2 L36,76.8 C36,79.8 39.5,81.5 42,80.0 L80.5,55.2 C83.0,53.7 83.0,50.3 80.5,48.8 Z"
+            android:strokeWidth="2.8">
             <aapt:attr name="android:strokeColor">
                 <gradient
-                    android:startX="38"
-                    android:startY="68"
-                    android:endX="70"
-                    android:endY="101"
+                    android:startX="36"
+                    android:startY="22"
+                    android:endX="83"
+                    android:endY="81"
                     android:type="linear">
-                    <item android:offset="0.0" android:color="#FF0055" />
-                    <item android:offset="0.4" android:color="#9900FF" />
-                    <item android:offset="0.7" android:color="#0088FF" />
-                    <item android:offset="1.0" android:color="#00FFFF" />
+                    <item android:offset="0.0" android:color="#FFAEB9" />
+                    <item android:offset="0.3" android:color="#FF1744" />
+                    <item android:offset="0.8" android:color="#B71C1C" />
+                    <item android:offset="1.0" android:color="#7F0000" />
+                </gradient>
+            </aapt:attr>
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:startX="36"
+                    android:startY="24"
+                    android:endX="82"
+                    android:endY="80"
+                    android:type="linear">
+                    <item android:offset="0.0" android:color="#FF2A55" />
+                    <item android:offset="0.35" android:color="#E50914" />
+                    <item android:offset="0.75" android:color="#A00015" />
+                    <item android:offset="1.0" android:color="#5B000C" />
                 </gradient>
             </aapt:attr>
         </path>
 
-        <!-- Arrow Specular Reflection -->
+        <!-- Gloss Highlight Flare on Top Play Edge -->
         <path
-            android:pathData="M52,72 L52,83 L45,83 L54,94 L54,72 Z"
-            android:fillColor="#40FFFFFF" />
+            android:pathData="M39,29 L39,48 C46,43 56,41 66,46 L45,30 C42,28 39,29 39,29 Z"
+            android:fillColor="#60FFFFFF" />
+
+        <!-- Downward High-Speed Download Arrow (Electric Cyan) -->
+        <!-- Arrow Stem -->
+        <path
+            android:pathData="M51,54 H61 V76 H51 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:startX="51"
+                    android:startY="54"
+                    android:endX="61"
+                    android:endY="76"
+                    android:type="linear">
+                    <item android:offset="0.0" android:color="#FFFFFF" />
+                    <item android:offset="1.0" android:color="#38BDF8" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Arrow Head Pointer -->
+        <path
+            android:pathData="M42,74 L56,90 L70,74 H63 V74 H49 V74 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:startX="42"
+                    android:startY="74"
+                    android:endX="70"
+                    android:endY="90"
+                    android:type="linear">
+                    <item android:offset="0.0" android:color="#FFFFFF" />
+                    <item android:offset="0.5" android:color="#38BDF8" />
+                    <item android:offset="1.0" android:color="#0284C7" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Sleek Neon Base Tray -->
+        <path
+            android:pathData="M44,96 H68"
+            android:strokeWidth="3.5"
+            android:strokeColor="#38BDF8"
+            android:strokeLineCap="round" />
+
+        <!-- Tech Speed Sparkle / Glint -->
+        <path
+            android:pathData="M88,28 L90,34 L96,36 L90,38 L88,44 L86,38 L80,36 L86,34 Z"
+            android:fillColor="#38BDF8" />
 
     </group>
 </vector>

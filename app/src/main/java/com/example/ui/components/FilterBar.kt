@@ -236,43 +236,6 @@ fun FilterBar(
                     labelColor = chipText
                 )
             )
-
-            AnimatedVisibility(
-                visible = hasActiveFilters,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFFEF4444).copy(alpha = if (isDarkTheme) 0.2f else 0.12f),
-                    modifier = Modifier.clip(RoundedCornerShape(20.dp))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        IconButton(
-                            onClick = onClearFilters,
-                            modifier = Modifier.size(18.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Limpiar filtros",
-                                tint = Color(0xFFEF4444),
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                        Text(
-                            text = "Limpiar",
-                            color = Color(0xFFEF4444),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
         }
     }
 }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -26,6 +27,7 @@ import java.io.InputStream
 import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 class DownloadHelper(
     private val context: Context,
@@ -44,6 +46,7 @@ class DownloadHelper(
 
     private val activeJobs = ConcurrentHashMap<String, Job>()
     private val lastNotificationUpdate = ConcurrentHashMap<String, Long>()
+    private val totalBandwidthBytesPerSec = AtomicLong(4 * 1024 * 1024L)
 
     companion object {
         const val CHANNEL_ID = "downloads_channel_v2"
@@ -73,10 +76,6 @@ class DownloadHelper(
     }
 
     fun startDownload(pelicula: Pelicula) {
-        if (pelicula.isVideo) {
-            Toast.makeText(context, "Los videos de YouTube están disponibles para reproducción directa", Toast.LENGTH_SHORT).show()
-            return
-        }
         val videoUrl = pelicula.safeVideoUrl
         if (videoUrl.isEmpty()) {
             Toast.makeText(context, "URL de video no válida", Toast.LENGTH_SHORT).show()
@@ -220,6 +219,88 @@ class DownloadHelper(
         resumeDownload(item)
     }
 
+    fun pauseAllDownloads() {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val currentList = preferences.downloads.first()
+                val downloadingOrPending = currentList.filter {
+                    it.status == DownloadStatus.DOWNLOADING || it.status == DownloadStatus.PENDING
+                }
+                downloadingOrPending.forEach { item ->
+                    activeJobs[item.id]?.cancel()
+                    activeJobs.remove(item.id)
+                    val pausedItem = item.copy(
+                        status = DownloadStatus.PAUSED,
+                        speedBytesPerSec = 0L,
+                        etaSeconds = 0L
+                    )
+                    preferences.addOrUpdateDownload(pausedItem)
+                    showPausedNotification(pausedItem)
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
+
+    fun resumeAllDownloads() {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val currentList = preferences.downloads.first()
+                val pausedOrPending = currentList.filter {
+                    it.status == DownloadStatus.PAUSED || it.status == DownloadStatus.PENDING || it.status == DownloadStatus.FAILED
+                }
+                val maxLimit = preferences.maxConcurrentDownloads.first()
+                var activeCount = currentList.count { it.status == DownloadStatus.DOWNLOADING }
+
+                pausedOrPending.forEach { item ->
+                    val file = File(item.localFilePath)
+                    if (activeCount < maxLimit) {
+                        activeCount++
+                        val resumingItem = item.copy(status = DownloadStatus.DOWNLOADING)
+                        preferences.addOrUpdateDownload(resumingItem)
+                        launchDownloadJob(resumingItem, file)
+                    } else {
+                        val pendingItem = item.copy(
+                            status = DownloadStatus.PENDING,
+                            speedBytesPerSec = 0L,
+                            etaSeconds = 0L
+                        )
+                        preferences.addOrUpdateDownload(pendingItem)
+                    }
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
+
+    fun cancelAllDownloads() {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val currentList = preferences.downloads.first()
+                val activeItems = currentList.filter {
+                    it.status == DownloadStatus.DOWNLOADING ||
+                    it.status == DownloadStatus.PAUSED ||
+                    it.status == DownloadStatus.PENDING ||
+                    it.status == DownloadStatus.FAILED
+                }
+                activeItems.forEach { item ->
+                    activeJobs[item.id]?.cancel()
+                    activeJobs.remove(item.id)
+                    val file = File(item.localFilePath)
+                    if (file.exists()) {
+                        file.delete()
+                    }
+                    notificationManager.cancel(getNotificationId(item.id))
+                    preferences.removeDownload(item.id)
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
+
     private fun launchDownloadJob(item: DownloadItem, destFile: File) {
         activeJobs[item.id]?.cancel()
         val job = scope.launch(Dispatchers.IO) {
@@ -268,11 +349,25 @@ class DownloadHelper(
                     downloaded += bytesRead
                     bytesSinceLastCalc += bytesRead
 
+                    // Equal bandwidth sharing across all concurrent active downloads
+                    val activeCount = activeJobs.size.coerceAtLeast(1)
+                    if (activeCount > 1) {
+                        val maxSpeedPerStream = totalBandwidthBytesPerSec.get() / activeCount
+                        if (maxSpeedPerStream > 10 * 1024) {
+                            val expectedChunkMs = (bytesRead * 1000L) / maxSpeedPerStream
+                            if (expectedChunkMs in 2..150) {
+                                delay(expectedChunkMs)
+                            }
+                        }
+                    }
+
                     val now = System.currentTimeMillis()
                     val elapsed = now - lastSpeedCalcTime
                     if (elapsed >= 800) {
                         val instantSpeed = (bytesSinceLastCalc * 1000L) / elapsed
                         currentSpeed = if (currentSpeed > 0) ((currentSpeed * 0.6) + (instantSpeed * 0.4)).toLong() else instantSpeed
+                        val currentActive = activeJobs.size.coerceAtLeast(1)
+                        totalBandwidthBytesPerSec.set((currentSpeed * currentActive).coerceAtLeast(512 * 1024L))
                         lastSpeedCalcTime = now
                         bytesSinceLastCalc = 0L
 

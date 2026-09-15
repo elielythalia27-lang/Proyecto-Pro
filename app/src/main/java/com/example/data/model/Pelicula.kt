@@ -139,12 +139,9 @@ enum class DownloadStatus {
 }
 
 enum class SortOption(val displayName: String) {
+    DEFAULT("Orden original (por defecto)"),
     NAME_AZ("Nombre (A - Z)"),
-    NAME_ZA("Nombre (Z - A)"),
-    MOVIES_FIRST("Películas primero"),
-    VIDEOS_FIRST("Videos de YouTube primero"),
-    YEAR_DESC("Año (recientes primero)"),
-    YEAR_ASC("Año (antiguos primero)")
+    NAME_ZA("Nombre (Z - A)")
 }
 
 enum class CatalogLayoutMode(val displayName: String) {

@@ -177,6 +177,9 @@ fun MainAppNavigation(
                                     onCancelDownload = { download ->
                                         viewModel.cancelDownload(download)
                                     },
+                                    onPauseAll = { viewModel.pauseAllDownloads() },
+                                    onResumeAll = { viewModel.resumeAllDownloads() },
+                                    onCancelAll = { viewModel.cancelAllDownloads() },
                                     onForceStartPending = { download ->
                                         viewModel.forceStartPendingDownload(download)
                                     },

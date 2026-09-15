@@ -11,6 +11,9 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -98,7 +101,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
@@ -132,6 +138,7 @@ fun PlayerScreen(
 
     var isPlaying by remember { mutableStateOf(true) }
     var isBuffering by remember { mutableStateOf(true) }
+    var playbackError by remember { mutableStateOf<String?>(null) }
     var currentPositionMs by remember { mutableLongStateOf(initialPositionMs) }
     var durationMs by remember { mutableLongStateOf(0L) }
     var isDraggingSlider by remember { mutableStateOf(false) }
@@ -172,27 +179,46 @@ fun PlayerScreen(
     var playerViewRef by remember { mutableStateOf<PlayerView?>(null) }
 
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            val uri = if (videoUrl.startsWith("http://") || videoUrl.startsWith("https://")) {
-                Uri.parse(videoUrl)
-            } else {
-                Uri.fromFile(File(videoUrl))
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent("Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+            .setConnectTimeoutMs(30000)
+            .setReadTimeoutMs(30000)
+            .setAllowCrossProtocolRedirects(true)
+
+        val dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
+        val mediaSourceFactory = ProgressiveMediaSource.Factory(dataSourceFactory)
+
+        ExoPlayer.Builder(context)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build().apply {
+                val uri = if (videoUrl.startsWith("http://") || videoUrl.startsWith("https://")) {
+                    Uri.parse(videoUrl)
+                } else {
+                    Uri.fromFile(File(videoUrl))
+                }
+                val mediaItem = MediaItem.fromUri(uri)
+                setMediaItem(mediaItem)
+                prepare()
+                playWhenReady = true
+                if (initialPositionMs > 0) {
+                    seekTo(initialPositionMs)
+                }
             }
-            val mediaItem = MediaItem.fromUri(uri)
-            setMediaItem(mediaItem)
-            prepare()
-            playWhenReady = true
-            if (initialPositionMs > 0) {
-                seekTo(initialPositionMs)
-            }
-        }
     }
 
-    // Keep screen on during playback
+    // Keep screen on and hide notification bar and navigation bar during playback
     DisposableEffect(Unit) {
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        val window = activity?.window
+        val insetsController = window?.let { WindowCompat.getInsetsController(it, it.decorView) }
+        insetsController?.let { controller ->
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+        }
         onDispose {
             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            insetsController?.show(WindowInsetsCompat.Type.systemBars())
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
     }
@@ -242,8 +268,15 @@ fun PlayerScreen(
             override fun onPlaybackStateChanged(state: Int) {
                 isBuffering = state == Player.STATE_BUFFERING
                 if (state == Player.STATE_READY) {
+                    isBuffering = false
+                    playbackError = null
                     durationMs = exoPlayer.duration.coerceAtLeast(0L)
                 }
+            }
+
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                isBuffering = false
+                playbackError = "Error al reproducir el video (${error.errorCodeName}). Verifica tu conexión o intenta con otra película."
             }
         }
         exoPlayer.addListener(listener)
@@ -463,86 +496,62 @@ fun PlayerScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Beautiful Loading / Buffering Interface
-            if (isBuffering) {
+            // Minimal Buffering Spinner
+            if (isBuffering && playbackError == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 3.dp
+                    )
+                }
+            }
+
+            // Playback Error Banner
+            playbackError?.let { errText ->
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(24.dp),
-                        color = Color(0xDD0A0F1D),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                        ),
-                        shadowElevation = 16.dp,
-                        modifier = Modifier.padding(horizontal = 28.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.Black.copy(alpha = 0.9f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.6f)),
+                        modifier = Modifier.padding(32.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(horizontal = 28.dp, vertical = 22.dp),
+                            modifier = Modifier.padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(56.dp),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                    strokeWidth = 3.5.dp
+                            Text(
+                                text = "Error de reproducción",
+                                color = Color(0xFFEF4444),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = errText,
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontSize = 13.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            androidx.compose.material3.Button(
+                                onClick = {
+                                    playbackError = null
+                                    isBuffering = true
+                                    exoPlayer.prepare()
+                                    exoPlayer.play()
+                                },
+                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
                                 )
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(
-                                    text = title,
-                                    color = Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Serif,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                                Text(
-                                    text = "Cargando reproducción HD...",
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF131D31)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(0xFF10B981))
-                                    )
-                                    Text(
-                                        text = "HW+ Aceleración activa",
-                                        color = Color(0xFF94A3B8),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
+                                Text("Reintentar")
                             }
                         }
                     }
@@ -799,7 +808,7 @@ fun PlayerScreen(
                                         colors = listOf(Color.Black.copy(alpha = 0.9f), Color.Transparent)
                                     )
                                 )
-                                .padding(horizontal = 14.dp, vertical = 12.dp)
+                                .padding(start = 14.dp, end = 14.dp, top = 44.dp, bottom = 12.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -831,17 +840,11 @@ fun PlayerScreen(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    if (year.isNotBlank()) {
                                         Text(
-                                            text = "$year • ${if (type == "pl") "Película" else "Video"}",
-                                            fontSize = 11.sp,
+                                            text = year,
+                                            fontSize = 12.sp,
                                             color = Color.White.copy(alpha = 0.7f)
-                                        )
-                                        Text(
-                                            text = "• HW+ Pro",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF10B981)
                                         )
                                     }
                                 }

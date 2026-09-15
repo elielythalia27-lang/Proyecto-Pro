@@ -559,8 +559,8 @@ fun AjustesScreen(
                 }
             }
 
-            // Section 7: Información de la Aplicación
-            SettingsCategoryHeader(title = "INFORMACIÓN DE LA APLICACIÓN", icon = Icons.Default.Info)
+            // Section 7: Enlace Oficial
+            SettingsCategoryHeader(title = "CANAL OFICIAL", icon = Icons.Default.Info)
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -572,141 +572,6 @@ fun AjustesScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_app_logo),
-                            contentDescription = "Icono de Download Free",
-                            modifier = Modifier.size(54.dp)
-                        )
-                        Text(
-                            text = "Download Free",
-                            fontWeight = FontWeight.Black,
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 20.sp,
-                            color = textPrimary
-                        )
-                    }
-
-                    HorizontalDivider(color = dividerColor)
-
-                    // Creador (@Eliel_21)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(itemBg)
-                            .border(1.dp, cardBorder, RoundedCornerShape(12.dp))
-                            .clickable {
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/Eliel_21"))
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Telegram: @Eliel_21", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.creator_avatar),
-                            contentDescription = "Creador Eliel_21",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(52.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Creador y Desarrollador",
-                                fontSize = 11.sp,
-                                color = textSecondary,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "@Eliel_21",
-                                fontSize = 16.sp,
-                                color = textPrimary,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Toca para chatear en Telegram",
-                                fontSize = 11.sp,
-                                color = Color(0xFF2AABEE)
-                            )
-                        }
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_telegram_logo),
-                            contentDescription = "Telegram",
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-
-                    // Colaborador (@SchnauzerMinnie)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(itemBg)
-                            .border(1.dp, cardBorder, RoundedCornerShape(12.dp))
-                            .clickable {
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/SchnauzerMinnie"))
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Telegram: @SchnauzerMinnie", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.collaborator_avatar),
-                            contentDescription = "Colaborador SchnauzerMinnie",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(52.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, Color(0xFFF59E0B), CircleShape)
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Colaborador del Proyecto",
-                                fontSize = 11.sp,
-                                color = textSecondary,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "@SchnauzerMinnie",
-                                fontSize = 16.sp,
-                                color = textPrimary,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Toca para chatear en Telegram",
-                                fontSize = 11.sp,
-                                color = Color(0xFF2AABEE)
-                            )
-                        }
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_telegram_logo),
-                            contentDescription = "Telegram",
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-
-                    HorizontalDivider(color = dividerColor)
-
                     // Telegram Canal Oficial
                     Row(
                         modifier = Modifier
@@ -733,7 +598,7 @@ fun AjustesScreen(
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Canal Oficial de Telegram",
+                                text = "Canal de Telegram",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
                                 color = textPrimary

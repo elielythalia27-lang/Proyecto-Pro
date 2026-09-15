@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.data.model.ContinueWatchingItem
 import com.example.ui.theme.CineGreen
@@ -126,13 +127,20 @@ fun ContinueWatchingBanner(
                         .background(if (isDarkTheme) Color(0xFF1E293B) else Color(0xFFE2E8F0)),
                     contentAlignment = Alignment.Center
                 ) {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(item.coverUrl)
                             .crossfade(true)
                             .build(),
                         contentDescription = item.title,
                         contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .shimmerEffect(isDark = isDarkTheme)
+                            )
+                        },
                         modifier = Modifier.fillMaxSize()
                     )
                     Box(

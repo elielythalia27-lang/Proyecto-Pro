@@ -253,30 +253,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             list = list.filter { state.favoriteIds.contains(it.id) }
         }
 
-        // Sort option - Default is NAME_AZ (ascending by title)
+        // Sort option - DEFAULT (JSON order), NAME_AZ, NAME_ZA
         list = when (state.sortOption) {
+            SortOption.DEFAULT -> list
             SortOption.NAME_AZ -> list.sortedBy { it.safeTitle.lowercase() }
             SortOption.NAME_ZA -> list.sortedByDescending { it.safeTitle.lowercase() }
-            SortOption.MOVIES_FIRST -> {
-                val movies = list.filter { it.isMovie }.sortedBy { it.safeTitle.lowercase() }
-                val others = list.filter { !it.isMovie }.sortedBy { it.safeTitle.lowercase() }
-                movies + others
-            }
-            SortOption.VIDEOS_FIRST -> {
-                val videos = list.filter { it.isVideo }.sortedBy { it.safeTitle.lowercase() }
-                val others = list.filter { !it.isVideo }.sortedBy { it.safeTitle.lowercase() }
-                videos + others
-            }
-            SortOption.YEAR_DESC -> list.sortedWith(Comparator { a, b ->
-                val numA = a.safeYear.toIntOrNull()
-                val numB = b.safeYear.toIntOrNull()
-                if (numA != null && numB != null) numB.compareTo(numA) else b.safeYear.compareTo(a.safeYear)
-            })
-            SortOption.YEAR_ASC -> list.sortedWith(Comparator { a, b ->
-                val numA = a.safeYear.toIntOrNull()
-                val numB = b.safeYear.toIntOrNull()
-                if (numA != null && numB != null) numA.compareTo(numB) else a.safeYear.compareTo(b.safeYear)
-            })
         }
 
         return state.copy(filteredPeliculas = list)
@@ -318,6 +299,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun forceStartPendingDownload(item: DownloadItem) {
         downloadHelper.forceStartPending(item)
+    }
+
+    fun pauseAllDownloads() {
+        downloadHelper.pauseAllDownloads()
+    }
+
+    fun resumeAllDownloads() {
+        downloadHelper.resumeAllDownloads()
+    }
+
+    fun cancelAllDownloads() {
+        downloadHelper.cancelAllDownloads()
     }
 
     fun savePlaybackPosition(

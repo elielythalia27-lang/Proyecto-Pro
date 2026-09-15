@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -66,6 +68,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.R
 import com.example.data.model.DownloadStatus
@@ -227,10 +230,69 @@ fun HomeScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .aspectRatio(0.75f)
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .aspectRatio(0.88f)
+                                        .clip(RoundedCornerShape(10.dp))
                                         .shimmerEffect()
                                 )
+                            }
+                        }
+                    }
+
+                    // No connection or failure to load JSON catalog and no local items
+                    uiState.allPeliculas.isEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isDark) Color(0xFF1E293B) else Color(0xFFE2E8F0)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.WifiOff,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(38.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "Sin conexión con el catálogo",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp,
+                                    color = titleTextColor,
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = "No se pudo cargar la lista de contenido. Comprueba tu conexión a internet e inténtalo de nuevo.",
+                                    fontSize = 13.5.sp,
+                                    color = subtitleTextColor,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Button(
+                                    onClick = onRefresh,
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.height(44.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Reintentar", fontWeight = FontWeight.Bold, color = Color.White)
+                                }
                             }
                         }
                     }
@@ -343,13 +405,20 @@ fun HomeScreen(
                         border = BorderStroke(1.dp, if (isDark) Color(0xFF1E293B) else Color(0xFFCBD5E1)),
                         color = if (isDark) Color(0xFF1E293B) else Color(0xFFE2E8F0)
                     ) {
-                        AsyncImage(
+                        SubcomposeAsyncImage(
                             model = ImageRequest.Builder(context)
                                 .data(pelicula.safeCoverUrl)
                                 .crossfade(true)
                                 .build(),
                             contentDescription = pelicula.safeTitle,
                             contentScale = ContentScale.Crop,
+                            loading = {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .shimmerEffect(isDark = isDark)
+                                )
+                            },
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -418,7 +487,7 @@ fun HomeScreen(
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Text(
-                                        text = "Disponible sin conexión",
+                                        text = "Descargada",
                                         fontSize = 11.sp,
                                         color = Color(0xFF10B981),
                                         fontWeight = FontWeight.Bold
@@ -492,10 +561,10 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = when {
-                            isDownloaded -> "Ya descargada en el dispositivo"
+                            isDownloaded -> "Ya descargada"
                             isDownloading -> "Descargando (${downloadItem?.progress ?: 0}%)"
                             isPaused -> "Descarga pausada"
-                            else -> "Descargar para ver offline"
+                            else -> "Descargar"
                         },
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp

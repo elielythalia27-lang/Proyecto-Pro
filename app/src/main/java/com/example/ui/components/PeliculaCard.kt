@@ -78,9 +78,9 @@ fun PeliculaCard(
         modifier = modifier
             .fillMaxWidth()
             .testTag("pelicula_card_${pelicula.id}")
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(10.dp))
             .clickable { onCardClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         border = BorderStroke(if (isDarkTheme) 1.dp else 1.5.dp, cardBorder),
         colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isDarkTheme) 2.dp else 4.dp)
@@ -88,11 +88,11 @@ fun PeliculaCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Poster area with balanced compact aspect ratio (0.75)
+            // Poster area with compact height (aspect ratio 0.88f)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.75f)
+                    .aspectRatio(0.88f)
                     .background(if (isDarkTheme) Color(0xFF161F33) else Color(0xFFE2E8F0))
             ) {
                 SubcomposeAsyncImage(
@@ -107,7 +107,7 @@ fun PeliculaCard(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .shimmerEffect()
+                                .shimmerEffect(isDark = isDarkTheme)
                         )
                     },
                     error = {
@@ -223,7 +223,7 @@ fun PeliculaCard(
                                     )
                                     Spacer(modifier = Modifier.width(3.dp))
                                     Text(
-                                        text = "Offline",
+                                        text = "Descargada",
                                         color = Color.White,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold
@@ -236,23 +236,23 @@ fun PeliculaCard(
                 }
             }
 
-            // Compact Fixed Height Title Container: guarantees identical card size for all movies
+            // Title Container: clear legible title
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp)
+                    .height(44.dp)
                     .background(cardBg)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = pelicula.safeTitle,
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Medium,
                     color = titleColor,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
-                    lineHeight = 14.sp,
+                    lineHeight = 15.sp,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -261,32 +261,20 @@ fun PeliculaCard(
 }
 
 /**
- * Shimmer effect modifier for image loading placeholders.
+ * Lightweight, high-performance pulse effect modifier replacing heavy linear gradient shimmers.
  */
 @Composable
 fun Modifier.shimmerEffect(): Modifier {
-    val transition = rememberInfiniteTransition(label = "shimmer_transition")
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
+    val transition = rememberInfiniteTransition(label = "pulse_transition")
+    val alphaAnim by transition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.85f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
+            animation = tween(durationMillis = 800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
         ),
-        label = "shimmer_anim"
+        label = "pulse_anim"
     )
 
-    val shimmerColors = listOf(
-        Color(0xFF1E293B).copy(alpha = 0.6f),
-        Color(0xFF334155).copy(alpha = 0.2f),
-        Color(0xFF1E293B).copy(alpha = 0.6f)
-    )
-
-    return this.background(
-        brush = Brush.linearGradient(
-            colors = shimmerColors,
-            start = Offset.Zero,
-            end = Offset(x = translateAnim, y = translateAnim)
-        )
-    )
+    return this.background(Color(0xFF1E293B).copy(alpha = alphaAnim))
 }

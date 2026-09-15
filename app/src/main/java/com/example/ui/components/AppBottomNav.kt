@@ -83,12 +83,12 @@ fun AppBottomNav(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 32.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier
-                .widthIn(max = 440.dp)
+                .widthIn(max = 340.dp)
                 .fillMaxWidth()
                 .shadow(
                     elevation = if (isDarkTheme) 14.dp else 16.dp,
@@ -103,14 +103,14 @@ fun AppBottomNav(
                 )
                 .testTag("floating_bottom_nav"),
             shape = RoundedCornerShape(32.dp),
-            color = if (isDarkTheme) Color(0xF80D1527) else Color(0xFFFFFFFF),
+            color = if (isDarkTheme) Color(0xD00D1527) else Color(0xD8FFFFFF),
             tonalElevation = 8.dp
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .height(60.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {

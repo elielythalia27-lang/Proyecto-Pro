@@ -40,12 +40,17 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -85,11 +90,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.data.model.DownloadItem
 import com.example.data.model.DownloadStatus
 import com.example.data.model.formatByteSize
 import com.example.ui.components.SleekLinearProgressBar
+import com.example.ui.components.shimmerEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,6 +107,9 @@ fun DescargasScreen(
     onPauseDownload: (DownloadItem) -> Unit,
     onResumeDownload: (DownloadItem) -> Unit,
     onCancelDownload: (DownloadItem) -> Unit,
+    onPauseAll: () -> Unit = {},
+    onResumeAll: () -> Unit = {},
+    onCancelAll: () -> Unit = {},
     onForceStartPending: (DownloadItem) -> Unit = {},
     onExploreClick: () -> Unit,
     isDarkTheme: Boolean = true,
@@ -109,6 +119,7 @@ fun DescargasScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     var itemToCancel by remember { mutableStateOf<DownloadItem?>(null) }
     var itemToDelete by remember { mutableStateOf<DownloadItem?>(null) }
+    var showCancelAllConfirm by remember { mutableStateOf(false) }
 
     val screenBg = if (isDarkTheme) Color(0xFF070B18) else Color(0xFFF1F5F9)
     val cardBg = if (isDarkTheme) Color(0xFF10192C) else Color.White
@@ -306,6 +317,9 @@ fun DescargasScreen(
                             onPause = onPauseDownload,
                             onResume = onResumeDownload,
                             onCancel = { itemToCancel = it },
+                            onPauseAll = onPauseAll,
+                            onResumeAll = onResumeAll,
+                            onCancelAll = { showCancelAllConfirm = true },
                             onForceStart = onForceStartPending,
                             onExploreClick = onExploreClick,
                             isDarkTheme = isDarkTheme,
@@ -395,6 +409,37 @@ fun DescargasScreen(
                 }
             )
         }
+
+        // Cancel All Downloads Dialog
+        if (showCancelAllConfirm) {
+            AlertDialog(
+                onDismissRequest = { showCancelAllConfirm = false },
+                containerColor = cardBg,
+                titleContentColor = textPrimary,
+                textContentColor = textSecondary,
+                title = { Text("Cancelar todas las descargas", fontWeight = FontWeight.Bold) },
+                text = {
+                    Text("¿Deseas detener y cancelar todas las descargas activas y en cola? Se descartarán los archivos temporales.")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            onCancelAll()
+                            showCancelAllConfirm = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Sí, cancelar todo", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCancelAllConfirm = false }) {
+                        Text("Volver", color = textSecondary)
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -406,6 +451,9 @@ private fun ActiveDownloadsTab(
     onPause: (DownloadItem) -> Unit,
     onResume: (DownloadItem) -> Unit,
     onCancel: (DownloadItem) -> Unit,
+    onPauseAll: () -> Unit = {},
+    onResumeAll: () -> Unit = {},
+    onCancelAll: () -> Unit = {},
     onForceStart: (DownloadItem) -> Unit,
     onExploreClick: () -> Unit,
     isDarkTheme: Boolean,
@@ -416,6 +464,10 @@ private fun ActiveDownloadsTab(
 ) {
     val downloadingOrPaused = activeList.filter { it.status == DownloadStatus.DOWNLOADING || it.status == DownloadStatus.PAUSED }
     val pendingItems = activeList.filter { it.status == DownloadStatus.PENDING }
+    val failedItems = activeList.filter { it.status == DownloadStatus.FAILED }
+
+    val hasActiveDownloads = activeList.any { it.status == DownloadStatus.DOWNLOADING }
+    val hasPausedOrPending = activeList.any { it.status == DownloadStatus.PAUSED || it.status == DownloadStatus.PENDING || it.status == DownloadStatus.FAILED }
 
     if (activeList.isEmpty()) {
         Box(
@@ -548,6 +600,143 @@ private fun ActiveDownloadsTab(
                 }
             }
 
+            // Bulk actions: Pausar todo, Reanudar todo, Cancelar todo
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Pausar todo
+                    Surface(
+                        onClick = onPauseAll,
+                        enabled = hasActiveDownloads,
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (hasActiveDownloads) {
+                            Color(0xFFF59E0B).copy(alpha = if (isDarkTheme) 0.18f else 0.12f)
+                        } else {
+                            if (isDarkTheme) Color(0xFF1E293B).copy(alpha = 0.4f) else Color(0xFFE2E8F0).copy(alpha = 0.6f)
+                        },
+                        border = BorderStroke(
+                            1.dp,
+                            if (hasActiveDownloads) Color(0xFFF59E0B).copy(alpha = 0.4f) else Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("btn_pause_all")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Pause,
+                                contentDescription = "Pausar todo",
+                                tint = if (hasActiveDownloads) Color(0xFFF59E0B) else textSecondary.copy(alpha = 0.4f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Pausar todo",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (hasActiveDownloads) {
+                                    if (isDarkTheme) Color.White else Color(0xFFB45309)
+                                } else textSecondary.copy(alpha = 0.4f),
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    // Reanudar todo
+                    Surface(
+                        onClick = onResumeAll,
+                        enabled = hasPausedOrPending,
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (hasPausedOrPending) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = if (isDarkTheme) 0.18f else 0.12f)
+                        } else {
+                            if (isDarkTheme) Color(0xFF1E293B).copy(alpha = 0.4f) else Color(0xFFE2E8F0).copy(alpha = 0.6f)
+                        },
+                        border = BorderStroke(
+                            1.dp,
+                            if (hasPausedOrPending) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("btn_resume_all")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Reanudar todo",
+                                tint = if (hasPausedOrPending) MaterialTheme.colorScheme.primary else textSecondary.copy(alpha = 0.4f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Reanudar todo",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (hasPausedOrPending) {
+                                    if (isDarkTheme) Color.White else MaterialTheme.colorScheme.primary
+                                } else textSecondary.copy(alpha = 0.4f),
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    // Cancelar todo
+                    Surface(
+                        onClick = onCancelAll,
+                        enabled = activeList.isNotEmpty(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (activeList.isNotEmpty()) {
+                            Color(0xFFEF4444).copy(alpha = if (isDarkTheme) 0.18f else 0.12f)
+                        } else {
+                            if (isDarkTheme) Color(0xFF1E293B).copy(alpha = 0.4f) else Color(0xFFE2E8F0).copy(alpha = 0.6f)
+                        },
+                        border = BorderStroke(
+                            1.dp,
+                            if (activeList.isNotEmpty()) Color(0xFFEF4444).copy(alpha = 0.4f) else Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("btn_cancel_all")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Cancelar todo",
+                                tint = if (activeList.isNotEmpty()) Color(0xFFEF4444) else textSecondary.copy(alpha = 0.4f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Cancelar todo",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (activeList.isNotEmpty()) {
+                                    if (isDarkTheme) Color.White else Color(0xFFB91C1C)
+                                } else textSecondary.copy(alpha = 0.4f),
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+
             // Downloading & Paused list
             if (downloadingOrPaused.isNotEmpty()) {
                 items(downloadingOrPaused, key = { it.id }) { item ->
@@ -602,6 +791,44 @@ private fun ActiveDownloadsTab(
                         textPrimary = textPrimary,
                         textSecondary = textSecondary
                     )
+                }
+
+                if (failedItems.isNotEmpty()) {
+                    item {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ErrorOutline,
+                                contentDescription = null,
+                                tint = Color(0xFFEF4444),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "CON ERROR (${failedItems.size})",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFEF4444),
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
+
+                    items(failedItems, key = { it.id }) { item ->
+                        ActiveDownloadingCard(
+                            item = item,
+                            onPause = {},
+                            onResume = { onForceStart(item) },
+                            onCancel = { onCancel(item) },
+                            isDarkTheme = isDarkTheme,
+                            cardBg = cardBg,
+                            cardBorder = cardBorder,
+                            textPrimary = textPrimary,
+                            textSecondary = textSecondary
+                        )
+                    }
                 }
             }
         }
@@ -780,6 +1007,7 @@ fun ActiveDownloadingCard(
 ) {
     val context = LocalContext.current
     val isPaused = item.status == DownloadStatus.PAUSED
+    val isFailed = item.status == DownloadStatus.FAILED
     val animatedProgress by animateFloatAsState(
         targetValue = item.progress / 100f,
         animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
@@ -790,7 +1018,14 @@ fun ActiveDownloadingCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp)),
-        border = BorderStroke(1.dp, if (isPaused) Color(0xFFF59E0B).copy(alpha = 0.4f) else cardBorder),
+        border = BorderStroke(
+            1.dp,
+            when {
+                isFailed -> Color(0xFFEF4444).copy(alpha = 0.5f)
+                isPaused -> Color(0xFFF59E0B).copy(alpha = 0.4f)
+                else -> cardBorder
+            }
+        ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isDarkTheme) 0.dp else 2.dp)
@@ -812,13 +1047,20 @@ fun ActiveDownloadingCard(
                         .background(if (isDarkTheme) Color(0xFF161F33) else Color(0xFFE2E8F0)),
                     contentAlignment = Alignment.Center
                 ) {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(item.coverUrl)
                             .crossfade(true)
                             .build(),
                         contentDescription = item.title,
                         contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .shimmerEffect()
+                            )
+                        },
                         modifier = Modifier.fillMaxSize()
                     )
                     Box(
@@ -846,11 +1088,23 @@ fun ActiveDownloadingCard(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = if (isPaused) Color(0xFFF59E0B).copy(alpha = 0.2f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            color = when {
+                                isFailed -> Color(0xFFEF4444).copy(alpha = 0.2f)
+                                isPaused -> Color(0xFFF59E0B).copy(alpha = 0.2f)
+                                else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            }
                         ) {
                             Text(
-                                text = if (isPaused) "En Pausa" else "Descargando",
-                                color = if (isPaused) Color(0xFFF59E0B) else MaterialTheme.colorScheme.primary,
+                                text = when {
+                                    isFailed -> "Error"
+                                    isPaused -> "En Pausa"
+                                    else -> "Descargando"
+                                },
+                                color = when {
+                                    isFailed -> Color(0xFFEF4444)
+                                    isPaused -> Color(0xFFF59E0B)
+                                    else -> MaterialTheme.colorScheme.primary
+                                },
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -887,10 +1141,14 @@ fun ActiveDownloadingCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = item.formattedSpeed,
+                            text = if (isFailed) "Error de conexión" else item.formattedSpeed,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (isPaused) Color(0xFFF59E0B) else MaterialTheme.colorScheme.primary
+                            color = when {
+                                isFailed -> Color(0xFFEF4444)
+                                isPaused -> Color(0xFFF59E0B)
+                                else -> MaterialTheme.colorScheme.primary
+                            }
                         )
                         Text(
                             text = "${item.progress}%",
@@ -908,7 +1166,11 @@ fun ActiveDownloadingCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(7.dp),
-                        color = if (isPaused) Color(0xFFF59E0B) else MaterialTheme.colorScheme.primary,
+                        color = when {
+                            isFailed -> Color(0xFFEF4444)
+                            isPaused -> Color(0xFFF59E0B)
+                            else -> MaterialTheme.colorScheme.primary
+                        },
                         trackColor = if (isDarkTheme) Color(0xFF1E293B) else Color(0xFFE2E8F0)
                     )
 
@@ -941,31 +1203,48 @@ fun ActiveDownloadingCard(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (isPaused) {
-                        // Resume Button
-                        IconButton(
-                            onClick = onResume,
-                            modifier = Modifier.size(34.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Reanudar descarga",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(22.dp)
-                            )
+                    when {
+                        isFailed -> {
+                            // Retry Button
+                            IconButton(
+                                onClick = onResume,
+                                modifier = Modifier.size(34.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Reintentar descarga",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
-                    } else {
-                        // Pause Button
-                        IconButton(
-                            onClick = onPause,
-                            modifier = Modifier.size(34.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Pause,
-                                contentDescription = "Pausar descarga",
-                                tint = Color(0xFFF59E0B),
-                                modifier = Modifier.size(22.dp)
-                            )
+                        isPaused -> {
+                            // Resume Button
+                            IconButton(
+                                onClick = onResume,
+                                modifier = Modifier.size(34.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Reanudar descarga",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        else -> {
+                            // Pause Button
+                            IconButton(
+                                onClick = onPause,
+                                modifier = Modifier.size(34.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Pause,
+                                    contentDescription = "Pausar descarga",
+                                    tint = Color(0xFFF59E0B),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
 
@@ -1024,13 +1303,20 @@ fun PendingQueueCard(
                     .background(if (isDarkTheme) Color(0xFF161F33) else Color(0xFFE2E8F0)),
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(item.coverUrl)
                         .crossfade(true)
                         .build(),
                     contentDescription = item.title,
                     contentScale = ContentScale.Crop,
+                    loading = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .shimmerEffect()
+                        )
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
                 Box(
@@ -1146,13 +1432,20 @@ fun DownloadedMovieCard(
                     .background(if (isDarkTheme) Color(0xFF161F33) else Color(0xFFE2E8F0)),
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(item.coverUrl)
                         .crossfade(true)
                         .build(),
                     contentDescription = item.title,
                     contentScale = ContentScale.Crop,
+                    loading = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .shimmerEffect()
+                        )
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
                 Box(
@@ -1170,7 +1463,7 @@ fun DownloadedMovieCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Reproducir offline",
+                            contentDescription = "Reproducir",
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)
                         )
@@ -1190,7 +1483,7 @@ fun DownloadedMovieCard(
                         color = Color(0xFF10B981)
                     ) {
                         Text(
-                            text = "Offline Listo",
+                            text = "Descargada",
                             color = Color.White,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
