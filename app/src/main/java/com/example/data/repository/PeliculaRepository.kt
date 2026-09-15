@@ -3,6 +3,7 @@ package com.example.data.repository
 import android.content.Context
 import coil.Coil
 import com.example.data.api.ApiService
+import com.example.data.api.SecureEndpointManager
 import com.example.data.local.PeliculaPreferences
 import com.example.data.model.ContinueWatchingItem
 import com.example.data.model.DownloadItem
@@ -42,7 +43,14 @@ class PeliculaRepository(
         val cached = preferences.cachedPeliculas.first()
 
         try {
-            val remoteList = apiService.getPeliculas()
+            // Cargar y desencriptar desde el endpoint seguro protegido contra ingeniería inversa
+            val remoteList = try {
+                SecureEndpointManager.fetchAndDecryptPeliculas()
+            } catch (secEx: Exception) {
+                // Si ocurre una contingencia de red con el endpoint cifrado, intentar vía apiService
+                apiService.getPeliculas()
+            }
+
             if (remoteList.isNotEmpty()) {
                 preferences.saveCachedPeliculas(remoteList)
                 emit(Resource.Success(remoteList, isOffline = false))

@@ -2,15 +2,20 @@ package com.example.data.download
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Environment
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.example.MainActivity
+import com.example.R
 import com.example.data.local.PeliculaPreferences
 import com.example.data.model.DownloadItem
 import com.example.data.model.DownloadStatus
 import com.example.data.model.Pelicula
+import com.example.utils.PermissionHelper
 import com.example.utils.VpnProxyDetector
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -52,26 +57,56 @@ class DownloadHelper(
     private val totalBandwidthBytesPerSec = AtomicLong(4 * 1024 * 1024L)
 
     companion object {
-        const val CHANNEL_ID = "downloads_channel_v2"
-        const val CHANNEL_NAME = "Descargas de películas"
+        const val CHANNEL_PROGRESS_ID = "downloads_progress_channel_v3"
+        const val CHANNEL_PROGRESS_NAME = "Progreso de descargas"
+        const val CHANNEL_ALERTS_ID = "downloads_alerts_channel_v3"
+        const val CHANNEL_ALERTS_NAME = "Avisos de descargas finalizadas"
     }
 
     init {
-        createNotificationChannel()
+        createNotificationChannels()
     }
 
-    private fun createNotificationChannel() {
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
+            // Canal para progreso continuo (sin sonido repetitivo ni vibración)
+            val progressChannel = NotificationChannel(
+                CHANNEL_PROGRESS_ID,
+                CHANNEL_PROGRESS_NAME,
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Progreso de descargas de películas y videos"
+                description = "Muestra la velocidad, tiempo estimado y barra de porcentaje"
                 setShowBadge(false)
+                enableVibration(false)
             }
-            notificationManager.createNotificationChannel(channel)
+
+            // Canal para avisos importantes y finalización (con alerta visual y vibración/sonido)
+            val alertsChannel = NotificationChannel(
+                CHANNEL_ALERTS_ID,
+                CHANNEL_ALERTS_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Avisos de películas listas para reproducir o errores de red"
+                setShowBadge(true)
+                enableVibration(true)
+            }
+
+            notificationManager.createNotificationChannel(progressChannel)
+            notificationManager.createNotificationChannel(alertsChannel)
         }
+    }
+
+    private fun getContentPendingIntent(): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("navigate_to", "descargas")
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+        return PendingIntent.getActivity(context, 0, intent, flags)
     }
 
     private fun getNotificationId(id: String): Int {
@@ -472,17 +507,20 @@ class DownloadHelper(
     }
 
     private fun updateProgressNotification(item: DownloadItem) {
+        if (!PermissionHelper.hasNotificationPermission(context)) return
+
         val now = System.currentTimeMillis()
         val lastUpdate = lastNotificationUpdate[item.id] ?: 0L
         if (now - lastUpdate < 1000) return
         lastNotificationUpdate[item.id] = now
 
         try {
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            val notification = NotificationCompat.Builder(context, CHANNEL_PROGRESS_ID)
                 .setContentTitle(item.title)
                 .setContentText("${item.formattedSpeed} • ${item.progress}% • ${item.formattedEta}")
-                .setSmallIcon(android.R.drawable.stat_sys_download)
+                .setSmallIcon(R.drawable.ic_notification_download)
                 .setProgress(100, item.progress, item.totalBytes <= 0)
+                .setContentIntent(getContentPendingIntent())
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .build()
@@ -493,11 +531,14 @@ class DownloadHelper(
     }
 
     private fun showCompletedNotification(item: DownloadItem) {
+        if (!PermissionHelper.hasNotificationPermission(context)) return
+
         try {
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            val notification = NotificationCompat.Builder(context, CHANNEL_ALERTS_ID)
                 .setContentTitle("Descarga completada")
                 .setContentText(item.title)
-                .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                .setSmallIcon(R.drawable.ic_notification_done)
+                .setContentIntent(getContentPendingIntent())
                 .setAutoCancel(true)
                 .setOngoing(false)
                 .build()
@@ -508,11 +549,14 @@ class DownloadHelper(
     }
 
     private fun showPausedNotification(item: DownloadItem) {
+        if (!PermissionHelper.hasNotificationPermission(context)) return
+
         try {
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            val notification = NotificationCompat.Builder(context, CHANNEL_PROGRESS_ID)
                 .setContentTitle("Descarga pausada")
                 .setContentText("${item.title} (${item.progress}%)")
-                .setSmallIcon(android.R.drawable.stat_sys_download)
+                .setSmallIcon(R.drawable.ic_notification_download)
+                .setContentIntent(getContentPendingIntent())
                 .setAutoCancel(true)
                 .setOngoing(false)
                 .build()
@@ -523,11 +567,14 @@ class DownloadHelper(
     }
 
     private fun showFailedNotification(item: DownloadItem, error: String) {
+        if (!PermissionHelper.hasNotificationPermission(context)) return
+
         try {
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            val notification = NotificationCompat.Builder(context, CHANNEL_ALERTS_ID)
                 .setContentTitle("Error al descargar")
                 .setContentText("${item.title}: $error")
-                .setSmallIcon(android.R.drawable.stat_notify_error)
+                .setSmallIcon(R.drawable.ic_notification_download)
+                .setContentIntent(getContentPendingIntent())
                 .setAutoCancel(true)
                 .setOngoing(false)
                 .build()

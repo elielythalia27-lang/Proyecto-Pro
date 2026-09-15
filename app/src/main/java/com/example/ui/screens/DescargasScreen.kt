@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlayCircle
@@ -97,6 +98,7 @@ import com.example.data.model.DownloadStatus
 import com.example.data.model.formatByteSize
 import com.example.ui.components.SleekLinearProgressBar
 import com.example.ui.components.shimmerEffect
+import com.example.utils.PermissionHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,6 +115,7 @@ fun DescargasScreen(
     onForceStartPending: (DownloadItem) -> Unit = {},
     onExploreClick: () -> Unit,
     isDarkTheme: Boolean = true,
+    onRequestPermissions: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -210,6 +213,68 @@ fun DescargasScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Aviso interactivo si las notificaciones están desactivadas
+            if (!PermissionHelper.hasNotificationPermission(context)) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isDarkTheme) Color(0xFF2C1618) else Color(0xFFFFEBEE),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isDarkTheme) Color(0xFFE53935).copy(alpha = 0.4f) else Color(0xFFFFCDD2)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFE53935).copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = null,
+                                tint = Color(0xFFE53935),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Notificaciones desactivadas",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = if (isDarkTheme) Color.White else Color(0xFFB71C1C)
+                            )
+                            Text(
+                                text = "Actívalas para ver la velocidad y aviso al finalizar.",
+                                fontSize = 11.5.sp,
+                                color = if (isDarkTheme) Color(0xFFEF9A9A) else Color(0xFFC62828)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = onRequestPermissions,
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFE53935)
+                            )
+                        ) {
+                            Text("Activar", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                }
+            }
+
             // Modern 2-Tab Navigation Bar
             Surface(
                 modifier = Modifier

@@ -3,8 +3,10 @@ package com.example
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -14,6 +16,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -30,8 +33,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.data.model.DownloadStatus
+import com.example.data.model.Pelicula
 import com.example.data.model.ThemeMode
 import com.example.ui.components.AppBottomNav
+import com.example.ui.components.PermissionRequestDialog
 import com.example.ui.components.VpnBlockedScreen
 import com.example.ui.screens.AjustesScreen
 import com.example.ui.screens.DescargasScreen
@@ -39,6 +44,7 @@ import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.PlayerScreen
 import com.example.ui.screens.SplashScreen
 import com.example.ui.theme.MyApplicationTheme
+import com.example.utils.PermissionHelper
 import com.example.utils.VpnProxyDetector
 import com.example.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
@@ -80,6 +86,29 @@ fun MainAppNavigation(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    val requiredPermissions = remember { PermissionHelper.getRequiredAppPermissions() }
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    var pendingDownloadPelicula by remember { mutableStateOf<Pelicula?>(null) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ ->
+        val granted = PermissionHelper.hasAllRequiredPermissions(context)
+        if (granted) {
+            showPermissionDialog = false
+            pendingDownloadPelicula?.let {
+                viewModel.startDownload(it)
+                pendingDownloadPelicula = null
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!PermissionHelper.hasAllRequiredPermissions(context)) {
+            showPermissionDialog = true
+        }
+    }
 
     var retryKey by remember { mutableStateOf(0) }
     val vpnStatus by produceState(
@@ -172,7 +201,12 @@ fun MainAppNavigation(
                                         viewModel.playPelicula(pelicula, pos)
                                     },
                                     onDownloadPelicula = { pelicula ->
-                                        viewModel.startDownload(pelicula)
+                                        if (PermissionHelper.hasAllRequiredPermissions(context)) {
+                                            viewModel.startDownload(pelicula)
+                                        } else {
+                                            pendingDownloadPelicula = pelicula
+                                            showPermissionDialog = true
+                                        }
                                     },
                                     onRefresh = { viewModel.loadPeliculas(forceRefresh = true) },
                                     onOpenSettings = {
@@ -213,7 +247,10 @@ fun MainAppNavigation(
                                             pagerState.animateScrollToPage(0)
                                         }
                                     },
-                                    isDarkTheme = isDark
+                                    isDarkTheme = isDark,
+                                    onRequestPermissions = {
+                                        showPermissionDialog = true
+                                    }
                                 )
                             }
 
@@ -253,6 +290,20 @@ fun MainAppNavigation(
                         isDarkTheme = isDark,
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
+
+                    if (showPermissionDialog) {
+                        PermissionRequestDialog(
+                            isDark = isDark,
+                            onGrantClick = {
+                                permissionLauncher.launch(requiredPermissions.toTypedArray())
+                                showPermissionDialog = false
+                            },
+                            onDismiss = {
+                                showPermissionDialog = false
+                                pendingDownloadPelicula = null
+                            }
+                        )
+                    }
                 }
             }
         }
